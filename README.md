@@ -87,12 +87,12 @@
 **方式 A：本地 tgz 安装（推荐，最可控）**
 
 ```bash
-openclaw plugins install npm-pack:/path/to/hotwvpyym-openclaw-lark-2026.10.5.tgz --force --accept-capabilities
+openclaw plugins install npm-pack:/path/to/hotwvpyym-openclaw-lark-2026.10.6.tgz --force --accept-capabilities
 ```
 
 **方式 B：从 GitHub Release 下载**
 
-在 [Releases](../../releases) 页面下载 `hotwvpyym-openclaw-lark-2026.10.5.tgz`，然后按方式 A 安装。
+在 [Releases](../../releases) 页面下载 `hotwvpyym-openclaw-lark-2026.10.6.tgz`，然后按方式 A 安装。
 
 **方式 C：ClawHub（发布后可用）**
 
@@ -103,7 +103,7 @@ openclaw plugins install @hotwvpyym/openclaw-lark
 安装完成后确认：
 
 ```bash
-openclaw plugins list        # 应看到 openclaw-lark，版本 2026.10.5
+openclaw plugins list        # 应看到 openclaw-lark，版本 2026.10.6
 openclaw gateway restart     # 若安装过程提示 drain 超时，用此命令兜底
 ```
 
@@ -170,7 +170,7 @@ openclaw config set channels.feishu.footer.model true     # 模型
 
 每个版本的详细更新说明（修复内容、发布原因、权威包 sha256）请查看 [GitHub Releases](https://github.com/hotwvpyym/openclaw-lark-compat/releases)。
 
-当前版本：**2026.10.5**（兼容 OpenClaw 2026.8.1 – 10.3 stable；三渠道同源发布：npm / GitHub Release / ClawHub，包内容逐字节一致）。
+当前版本：**2026.10.6**（兼容 OpenClaw 2026.8.1 – 10.3 stable；三渠道同源发布：npm / GitHub Release / ClawHub，包内容逐字节一致）。
 
 ---
 

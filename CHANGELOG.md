@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026.10.6 — 2026-10-15（README 精简 + 版本表述修正）
+
+**变更：**
+
+- README（中英双语）精简：第二章「兼容版本」压缩为一行声明（仅列 OpenClaw 平台版本 8.1/8.35/9.6/9.7/9.8/10.3，移除误插入的插件版本行——OpenClaw 平台未发布 10.4/10.5）；第六章「版本历史」改为引导访问 GitHub Releases（每个版本更新详情在 Releases body 写清）
+- 修正第一章对齐验证表述（10.3/10.4 → 10.3，OpenClaw 平台版本）与 contracts 告警消除版本（10.4 → 10.5）
+- `package.json`：版本号 `2026.10.5` → `2026.10.6`，`build.openclawVersion` 同步
+
+**影响：** 纯文档/版本号改动，插件运行时功能、兼容性、配置全部不变。
+
+**发布形态：**
+
+- 权威 tgz：`hotwvpyym-openclaw-lark-2026.10.6.tgz`
+- 三渠道同源发布：npm `@hotwvpyym/openclaw-lark@2026.10.6`（latest）/ GitHub Release `v2026.10.6` / ClawHub 2026.10.6
+- 兼容范围不变：OpenClaw `>=2026.8.1`
+
 ## 2026.10.5 — 2026-10-15（元数据规范化终版：移除 contracts 字段，ClawHub 扫描归零）
 
 **为什么 10.3 → 10.4 → 10.5 间隔这么短：**
