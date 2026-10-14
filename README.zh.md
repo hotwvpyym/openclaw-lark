@@ -37,6 +37,9 @@
    - **9.x**（`2026.8.1` ~ `2026.9.x`）：仍走官方 legacy `command-auth`，行为与历史版本完全一致；
    - **10.x**（`2026.10.x`）：自动切换到官方 `channel-ingress-runtime` 完成命令授权（与 OpenClaw 10.x 主机其他渠道行为一致）；
    - **授权一致性回归**：3840 组参数对比 legacy vs ingress，3560 组一致（92.7%），280 组差异全部为官方 10.x 有意收紧（更严格、更安全，无反向风险）；同时修复空 sender + 通配 allowlist 的越权缺口（详见 `reports/auth-consistency/REPORT.md`）。
+5. **manifest configSchema 修复（OpenClaw 10.x 配置校验收严）**：OpenClaw 10.x 起基于插件 manifest 的 `configSchema` **严格校验**渠道配置；旧版 manifest 该字段为空，导致 `channels.feishu.footer`（页脚六项开关）等全部合法配置被拒绝（报 `must not have additional properties`），openclaw 升级后插件配置直接 invalid。
+   - 修复：将源码 `FEISHU_CONFIG_JSON_SCHEMA`（zod 自动生成）完整同步进 manifest `configSchema`，共 **41 个字段**（footer 六项 / dmPolicy / replyMode / heartbeat / dedup / accounts 等）；
+   - 效果：`openclaw config validate` 通过，页脚六项等配置正常生效；ClawHub validate 2026.10.3 **0 Breakages / 0 Warnings**。
 
 ### 保留的官方全部功能
 

@@ -17,7 +17,7 @@ All notable changes to this project are documented in this file.
 
 **发布形态：**
 
-- 权威 tgz：`hotwvpyym-openclaw-lark-2026.10.3.tgz`（sha256 `83fc3d1daa54a289187e5b23dfda8fa6e5eea2c768a82dae2b69d5c8bcc6c136`）
+- 权威 tgz：`hotwvpyym-openclaw-lark-2026.10.3.tgz`（sha256 `a22b3cda78bff3cf33ea0eea24e3af3f664c3e369e9f25b248db576672cf14fc`，含中英文 README）
 - 三渠道同源发布：npm `@hotwvpyym/openclaw-lark` / GitHub Release `v2026.10.3` / ClawHub `@hotwvpyym/openclaw-lark`
 
 ## 2026.9.7 — 2026-10-04（正式发布版）
