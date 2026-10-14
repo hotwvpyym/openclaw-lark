@@ -2,7 +2,24 @@
 
 All notable changes to this project are documented in this file.
 
-## 2026.9.7.0 — 2026-10-03（正式发布版）
+## 2026.10.3 — 2026-10-14（对齐 OpenClaw 2026.10.3 稳定版）
+
+**OpenClaw 10.x 兼容适配（核心变更）：**
+
+- 适配 **OpenClaw 2026.10.3 稳定版**（npm latest，2026-10-13 发布）；SDK 依赖升级 `2026.10.2 → 2026.10.3`
+- **新增 `command-auth-compat` 双路径兼容层**：OpenClaw 10.x 官方移除了 `openclaw/plugin-sdk/command-auth` 子路径（官方 7.16 静态 import 会在插件注册前加载失败）——9.x 走官方 legacy `command-auth`、10.x 自动切换官方 `channel-ingress-runtime`，覆盖 `2026.8.1` 至 `2026.10.3` 全线
+- **授权一致性回归（对标官方 PR #638 方法论）**：3840 组参数对比 legacy vs ingress —— 3560 组一致（92.7%）；280 组差异全部为官方 10.x 语义收紧（更严格，无反向风险）；**修复空 sender + 通配 allowlist 越权缺口**（新增空 sender 恒拒绝保护）
+- `openclaw.plugin.json` 补充 `name: "OpenClaw Lark (Community Compat)"`，消除 `manifest-name-missing` 警告
+- ClawHub validate `2026.10.3`：**0 Breakages / 0 Warnings / PASS**
+- 门禁全绿：typecheck 0 错误 / lint 0 errors / **54 文件 445 测试全绿** / build 通过
+- 兼容范围：OpenClaw `>=2026.8.1`（8.1 / 8.35 / 9.6 / 9.7 / 9.8 / 10.3 实证）
+
+**发布形态：**
+
+- 权威 tgz：`hotwvpyym-openclaw-lark-2026.10.3.tgz`（sha256 `b6f2be71d7b27df82538337c7802c51cf2fe990edb2f070be29b7e536f83185d`）
+- 三渠道同源发布：npm `@hotwvpyym/openclaw-lark` / GitHub Release `v2026.10.3` / ClawHub `@hotwvpyym/openclaw-lark`
+
+## 2026.9.7 — 2026-10-04（正式发布版）
 
 **发布就绪变更：**
 

@@ -19,10 +19,10 @@
 | 事实 | 说明 |
 |---|---|
 | 官方插件停更 | `larksuite/openclaw-lark` 最后一个官方版本为 **2026.7.16**，之后官方不再维护 |
-| 与新版 OpenClaw 不兼容 | 官方 2026.7.16 版无法安装/正常运行在 OpenClaw **2026.9.x**（插件 SDK API 已变化） |
+| 与新版 OpenClaw 不兼容 | 官方 2026.7.16 版无法安装/正常运行在 OpenClaw **2026.9.x 及以上**（插件 SDK API 已变化）；**2026.10.x 起官方移除了 `openclaw/plugin-sdk/command-auth` 子路径**，官方 7.16 的静态 import 会在插件注册前加载失败 |
 | 官方新线门槛更高 | 官方替代插件 `@openclaw/feishu` 要求 OpenClaw **≥2026.9.8**，无法用于 9.7 及以下版本，且该插件**不提供卡片用量页脚（footer metrics）** |
 
-### 本版本修复的核心问题（OpenClaw 2026.9.7 生产实测验证）
+### 本版本修复的核心问题（OpenClaw 2026.9.7 生产实测验证 + 2026.10.3 对齐验证）
 
 1. **卡片页脚指标缺失**：官方版升级到 9.7 后，卡片页脚只剩「状态 + 耗时」，`tokens / cache / context / model` 四项全部丢失。
    - 根因：OpenClaw 2026.9.7 起会话存储从 `sessions.json` 改为 **per-agent SQLite**（`<stateDir>/agents/<agentId>/agent/openclaw-agent.sqlite`），footer 渲染时的 agent 归属解析抛出 `AgentSelectionRequiredError`，被外层 `catch` 静默吞掉，导致页脚渲染中止。
@@ -33,6 +33,10 @@
    - 会话快照探测削峰（每轮 720 次 → ≤60 次，SDK 探测一次缓存）；
    - 高频日志降噪（info → debug）；
    - AbortController 生命周期管理（流式卡片请求可被中断、随网关关闭清理）。
+4. **OpenClaw 10.x 兼容层（2026.10.3 起）**：官方 10.x 移除了 `openclaw/plugin-sdk/command-auth` 子路径，新增 `command-auth-compat` 双路径兼容层：
+   - **9.x**（`2026.8.1` ~ `2026.9.x`）：仍走官方 legacy `command-auth`，行为与历史版本完全一致；
+   - **10.x**（`2026.10.x`）：自动切换到官方 `channel-ingress-runtime` 完成命令授权（与 OpenClaw 10.x 主机其他渠道行为一致）；
+   - **授权一致性回归**：3840 组参数对比 legacy vs ingress，3560 组一致（92.7%），280 组差异全部为官方 10.x 有意收紧（更严格、更安全，无反向风险）；同时修复空 sender + 通配 allowlist 的越权缺口（详见 `reports/auth-consistency/REPORT.md`）。
 
 ### 保留的官方全部功能
 
@@ -69,6 +73,7 @@
 | 2026.9.6 | 官方 tarball | typecheck 0 错误 ✅ |
 | 2026.9.7 | 官方 tarball + 生产服务器 | typecheck 0 错误 + 生产实测（footer 六项/消息收发/插件加载全过）✅ |
 | 2026.9.8 | 官方 tarball | typecheck 0 错误 ✅ |
+| **2026.10.3** | 官方 npm（latest 稳定版） | typecheck 0 错误 + lint 0 errors + 445 测试全绿 + clawhub validate **0 Breakages / 0 Warnings** ✅ |
 
 **架构适配说明**：OpenClaw 8.x / 9.6 使用 `sessions.json` 会话存储，9.7+ 使用 per-agent SQLite —— 插件对两种架构均做了兼容（SQLite 直读不可用时自动回退 SDK 读取），因此 2026.8.1 至最新版均可用。
 
@@ -86,12 +91,12 @@
 **方式 A：本地 tgz 安装（推荐，最可控）**
 
 ```bash
-openclaw plugins install npm-pack:/path/to/hotwvpyym-openclaw-lark-2026.9.7.0.tgz --force --accept-capabilities
+openclaw plugins install npm-pack:/path/to/hotwvpyym-openclaw-lark-2026.10.3.tgz --force --accept-capabilities
 ```
 
 **方式 B：从 GitHub Release 下载**
 
-在 [Releases](../../releases) 页面下载 `hotwvpyym-openclaw-lark-2026.9.7.0.tgz`，然后按方式 A 安装。
+在 [Releases](../../releases) 页面下载 `hotwvpyym-openclaw-lark-2026.10.3.tgz`，然后按方式 A 安装。
 
 **方式 C：ClawHub（发布后可用）**
 
@@ -102,7 +107,7 @@ openclaw plugins install @hotwvpyym/openclaw-lark
 安装完成后确认：
 
 ```bash
-openclaw plugins list        # 应看到 openclaw-lark，版本 2026.9.7.0
+openclaw plugins list        # 应看到 openclaw-lark，版本 2026.10.3
 openclaw gateway restart     # 若安装过程提示 drain 超时，用此命令兜底
 ```
 
@@ -156,7 +161,10 @@ openclaw config set channels.feishu.footer.model true     # 模型
 
 - 🐛 **Bug 报告**：请提交 [Issue](../../issues)，附上：OpenClaw 版本（`openclaw -v`）、插件版本（`openclaw plugins list`）、复现步骤、相关日志。
 - 💡 **功能建议**：同样通过 Issue 提出。
-- 🔄 **持续更新**：本仓库将跟随 OpenClaw 版本演进持续维护；新版本发布后，使用 `openclaw plugins install npm-pack:/path/to/<新版.tgz> --force --accept-capabilities` 升级即可（**同名升级直接覆盖，无需卸载**）。
+- 🔄 **持续更新**：本仓库将跟随 OpenClaw 版本演进持续维护。升级方式三选一：
+  - **热更新（推荐，无需重启 Gateway）**：`openclaw plugins update <id>` 或 `openclaw plugins install <新版>` 后执行 `openclaw plugins reload <id>`——OpenClaw 10.x 原生支持插件级热重载（60 秒 drain 窗口，失败自动回滚保留旧版本继续服务）；本插件已通过资源生命周期审计，兼容 reload；
+  - **本地 tgz**：`openclaw plugins install npm-pack:/path/to/<新版.tgz> --force --accept-capabilities`（同名升级直接覆盖）；
+  - **兜底**：`openclaw gateway restart`。
 
 **已知限制**：暂无已知功能性问题；如发现问题会在本 README 与 CHANGELOG 中同步更新。
 
@@ -166,7 +174,8 @@ openclaw config set channels.feishu.footer.model true     # 模型
 
 | 版本 | 内容 |
 |---|---|
-| **2026.9.7.0**（当前，正式发布版） | 发布就绪版本：包名改为 `@hotwvpyym/openclaw-lark`（匹配 ClawHub 发布者 scope），补 `openclaw.build.openclawVersion`/`license` 字段；内容与 9.6.11 一致（日历 page_size 全量修复 + footer 指标 + 性能优化） |
+| **2026.10.3**（当前，正式发布版） | **对齐 OpenClaw 2026.10.3 稳定版（npm latest）**：新增 `command-auth-compat` 双路径兼容层（9.x legacy / 10.x channel-ingress-runtime），修复官方 10.x 移除 command-auth 子路径后的加载失败；manifest 补 `name` 字段，clawhub validate 2026.10.3 达 0 Breakages / 0 Warnings；授权一致性回归 3840 组通过（含空 sender 越权缺口修复）；兼容 OpenClaw ≥2026.8.1 |
+| 2026.9.7 | 发布就绪版本：包名改为 `@hotwvpyym/openclaw-lark`（匹配 ClawHub 发布者 scope），补 `openclaw.build.openclawVersion`/`license` 字段；内容与 9.6.11 一致（日历 page_size 全量修复 + footer 指标 + 性能优化） |
 | 2026.9.6.11 | 日历等 13 文件 20 处 `page_size` 上下限全量补齐（按飞书文档），calendar 系列运行时钳制双保险；修复上一版注入产生的语法问题 |
 | 2026.9.6.10 | AbortController 生命周期管理；`not available` 日志降级 debug |
 | 2026.9.6.9 | 会话快照探测削峰（720→≤60 次/轮）；4 处高频日志降噪 |

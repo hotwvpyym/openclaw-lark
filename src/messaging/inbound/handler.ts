@@ -12,7 +12,8 @@
  *   5. Policy gate           → gate.ts
  *   6. User name prefetch    → enrich.ts (batch cache warm-up)
  *   7. Content resolution    → enrich.ts (media / quote, parallel)
- *   8. Command authorization → plugin-sdk/command-auth
+ *   8. Command authorization → command-auth-compat (legacy command-auth on 9.x,
+ *      channel-ingress-runtime on 10.x)
  *   9. Agent dispatch        → dispatch.ts
  */
 
@@ -23,7 +24,6 @@ import {
   DEFAULT_GROUP_HISTORY_LIMIT,
   recordPendingHistoryEntryIfEnabled,
 } from 'openclaw/plugin-sdk/reply-history';
-import { resolveSenderCommandAuthorization } from 'openclaw/plugin-sdk/command-auth';
 import { isNormalizedSenderAllowed } from 'openclaw/plugin-sdk/allow-from';
 import type { FeishuMessageEvent } from '../types';
 import { getLarkAccount } from '../../core/accounts';
@@ -32,6 +32,7 @@ import { larkLogger } from '../../core/lark-logger';
 import { ticketElapsed } from '../../core/lark-ticket';
 import { threadScopedKey } from '../../channel/chat-queue';
 import { sendMessageFeishu } from '../outbound/send';
+import { resolveSenderCommandAuthorizationCompat } from './command-auth-compat';
 import { parseMessageEvent } from './parse';
 import {
   prefetchUserNames,
@@ -265,7 +266,7 @@ export async function handleFeishuMessage(params: {
     return explicitSenderPolicy === 'open' ? ['*'] : [];
   })();
 
-  const { commandAuthorized } = await resolveSenderCommandAuthorization({
+  const { commandAuthorized } = await resolveSenderCommandAuthorizationCompat({
     rawBody: ctx.content,
     cfg: accountScopedCfg,
     isGroup,
@@ -275,6 +276,8 @@ export async function handleFeishuMessage(params: {
     senderId: ctx.senderId,
     isSenderAllowed: (senderId, allowFrom) => isNormalizedSenderAllowed({ senderId, allowFrom }),
     readAllowFromStore: () => readFeishuAllowFromStore(account.accountId),
+    channelId: ctx.chatId,
+    accountId: account.accountId,
     shouldComputeCommandAuthorized: core.channel.commands.shouldComputeCommandAuthorized,
     resolveCommandAuthorizedFromAuthorizers: core.channel.commands.resolveCommandAuthorizedFromAuthorizers,
   });
