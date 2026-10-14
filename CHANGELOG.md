@@ -2,6 +2,31 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026.10.4 — 2026-10-15（元数据规范化：contracts 对齐平台契约白名单）
+
+**为什么距 10.3 仅一天就发布 10.4：**
+
+- 10.3 发布后，ClawHub **提交后安全扫描**（比本地 `clawhub package validate` 更严格，本地已 PASS）检出 `manifest-unknown-contracts`（P1）：manifest `contracts.tools` 声明的 39 个 contract keys 与平台契约白名单不一致
+- 这 39 个 key 源自官方 @larksuite/openclaw-lark **2026.7.16 的遗留命名**（npm 包实测：官方 7.16 同样声明这 39 个 key）；官方内置 @openclaw/feishu@2026.10.3 已迁移为 **14 个能力域级 key**（`feishu_app_scopes` / `feishu_bitable_*` / `feishu_chat` / `feishu_doc` / `feishu_drive` / `feishu_perm` / `feishu_wiki`），交集仅 `feishu_chat` 一个
+
+**变更：**
+
+- `openclaw.plugin.json` 的 `contracts.tools`：39 个工具级 key → 官方内置 **14 个能力域级 key**（与 @openclaw/feishu@2026.10.3 完全一致）
+- `package.json` 版本号：`2026.10.3` → `2026.10.4`
+- README（中英双语）与 CHANGELOG 同步：版本历史、兼容表、安装命令更新为 2026.10.4
+
+**影响说明（重要）：**
+
+- 这是**纯元数据规范化**：`contracts` 是静态能力所有权元数据，不参与插件运行时
+- **插件运行时功能、39 个飞书工具、OpenClaw 8.1–10.3 兼容性（command-auth-compat 双路径）、footer/configSchema 41 字段、授权一致性 3840 组——全部不变**
+- ClawHub 平台扫描预期 **warning 归零**（0 errors / 0 warnings）
+- 三渠道同源重新发布：npm `@hotwvpyym/openclaw-lark@2026.10.4` / GitHub Release `v2026.10.4` / ClawHub `@hotwvpyym/openclaw-lark` 2026.10.4
+
+**发布形态：**
+
+- 权威 tgz：`hotwvpyym-openclaw-lark-2026.10.4.tgz`
+- 兼容范围不变：OpenClaw `>=2026.8.1`（8.1 / 8.35 / 9.6 / 9.7 / 9.8 / 10.3 实证）
+
 ## 2026.10.3 — 2026-10-14（对齐 OpenClaw 2026.10.3 稳定版）
 
 **OpenClaw 10.x 兼容适配（核心变更）：**
