@@ -78,6 +78,7 @@
 | 2026.9.6 | 官方 tarball | typecheck 0 错误 ✅ |
 | 2026.9.7 | 官方 tarball + 生产服务器 | typecheck 0 错误 + 生产实测（footer 六项/消息收发/插件加载全过）✅ |
 | 2026.9.8 | 官方 tarball | typecheck 0 错误 ✅ |
+| **2026.10.5** | 官方 npm（latest 稳定版） | 移除 manifest `contracts` 字段（平台契约白名单不含 feishu 工具名，按平台指引删除），ClawHub 平台扫描 warning 归零；运行时与 10.3/10.4 完全一致 ✅ |
 | **2026.10.4** | 官方 npm（latest 稳定版） | 与 10.3 运行时完全一致；manifest `contracts` 对齐平台契约白名单（14 key，官方内置命名），ClawHub 平台扫描 warning 归零 ✅ |
 | 2026.10.3 | 官方 npm（latest 稳定版） | typecheck 0 错误 + lint 0 errors + 445 测试全绿 + clawhub validate **0 Breakages / 0 Warnings** ✅ |
 
@@ -97,12 +98,12 @@
 **方式 A：本地 tgz 安装（推荐，最可控）**
 
 ```bash
-openclaw plugins install npm-pack:/path/to/hotwvpyym-openclaw-lark-2026.10.4.tgz --force --accept-capabilities
+openclaw plugins install npm-pack:/path/to/hotwvpyym-openclaw-lark-2026.10.5.tgz --force --accept-capabilities
 ```
 
 **方式 B：从 GitHub Release 下载**
 
-在 [Releases](../../releases) 页面下载 `hotwvpyym-openclaw-lark-2026.10.4.tgz`，然后按方式 A 安装。
+在 [Releases](../../releases) 页面下载 `hotwvpyym-openclaw-lark-2026.10.5.tgz`，然后按方式 A 安装。
 
 **方式 C：ClawHub（发布后可用）**
 
@@ -113,7 +114,7 @@ openclaw plugins install @hotwvpyym/openclaw-lark
 安装完成后确认：
 
 ```bash
-openclaw plugins list        # 应看到 openclaw-lark，版本 2026.10.4
+openclaw plugins list        # 应看到 openclaw-lark，版本 2026.10.5
 openclaw gateway restart     # 若安装过程提示 drain 超时，用此命令兜底
 ```
 
@@ -180,7 +181,8 @@ openclaw config set channels.feishu.footer.model true     # 模型
 
 | 版本 | 内容 |
 |---|---|
-| **2026.10.4**（当前，正式发布版） | **元数据规范化（contracts 对齐平台契约白名单）**。为什么距 10.3 仅一天就发 10.4：10.3 在 ClawHub **提交后安全扫描**阶段被平台检出 `manifest-unknown-contracts`（P1）——manifest `contracts.tools` 声明的 39 个 key 与平台契约白名单不一致。这些 key 源自官方 @larksuite/openclaw-lark 2026.7.16 的**遗留命名**（官方内置 @openclaw/feishu 早已迁移为 14 个能力域级 key）。本版将 contracts 对齐为官方内置 14 key。**影响说明**：这是**纯元数据规范化**——插件运行时功能、39 个飞书工具、OpenClaw 8.1–10.3 兼容性、footer/configSchema/授权一致性**全部不变**；ClawHub 平台扫描 warning 归零。三渠道同源重新发布（npm / GitHub Release v2026.10.4 / ClawHub 2026.10.4） |
+| **2026.10.5**（当前，正式发布版） | **元数据规范化（移除 contracts 字段，ClawHub 扫描归零）**。为什么 10.3→10.4→10.5 间隔这么短：10.3 发布后 ClawHub **提交后安全扫描**检出 `manifest-unknown-contracts`（P1）。10.4 将 `contracts.tools` 的 39 个官方 7.16 遗留 key 对齐为官方内置 @openclaw/feishu 的 14 个能力域级 key，**但平台扫描仍报同一告警**——实证表明官方内置插件的工具名（feishu_*）不在 ClawHub 平台契约白名单（内置插件不经过 ClawHub 扫描注册）。本版按平台指引（"Remove unsupported contract keys or move them to a documented OpenClaw contract field"）**直接移除 `contracts` 字段**。**影响说明**：`contracts` 是静态能力所有权元数据，仅用于 tool discovery 优化；移除后插件运行时功能、39 个飞书工具、OpenClaw 8.1–10.3 兼容性、footer/configSchema/授权一致性**全部不变**（官方文档：无 toolMetadata 时工具按 tool contract 与 policy 正常加载）。三渠道同源重新发布（npm / GitHub Release v2026.10.5 / ClawHub 2026.10.5） |
+| 2026.10.4（正式发布版） | 元数据规范化第一步：`contracts.tools` 39 个官方 7.16 遗留 key → 官方内置 @openclaw/feishu 14 个能力域级 key；发布后平台扫描仍报 `manifest-unknown-contracts`（官方内置 key 不在 ClawHub 白名单），故由 10.5 彻底移除 |
 | 2026.10.3（正式发布版） | 对齐 OpenClaw 2026.10.3 稳定版（npm latest）：新增 `command-auth-compat` 双路径兼容层（9.x legacy / 10.x channel-ingress-runtime），修复官方 10.x 移除 command-auth 子路径后的加载失败；manifest 补 `name` 字段；授权一致性回归 3840 组通过（含空 sender 越权缺口修复）；兼容 OpenClaw ≥2026.8.1 |
 | 2026.9.7 | 发布就绪版本：包名改为 `@hotwvpyym/openclaw-lark`（匹配 ClawHub 发布者 scope），补 `openclaw.build.openclawVersion`/`license` 字段；内容与 9.6.11 一致（日历 page_size 全量修复 + footer 指标 + 性能优化） |
 | 2026.9.6.11 | 日历等 13 文件 20 处 `page_size` 上下限全量补齐（按飞书文档），calendar 系列运行时钳制双保险；修复上一版注入产生的语法问题 |

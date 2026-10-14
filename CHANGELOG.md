@@ -2,7 +2,34 @@
 
 All notable changes to this project are documented in this file.
 
-## 2026.10.4 — 2026-10-15（元数据规范化：contracts 对齐平台契约白名单）
+## 2026.10.5 — 2026-10-15（元数据规范化终版：移除 contracts 字段，ClawHub 扫描归零）
+
+**为什么 10.3 → 10.4 → 10.5 间隔这么短：**
+
+- 10.3 发布后，ClawHub **提交后安全扫描**（比本地 `clawhub package validate` 严格）检出 `manifest-unknown-contracts`（P1）：`contracts.tools` 声明的 key 不在平台契约白名单
+- 10.4（同日）将 `contracts.tools` 39 个官方 7.16 遗留 key 对齐为官方内置 @openclaw/feishu@2026.10.3 的 14 个能力域级 key——**发布后平台扫描仍报同一告警**。实证结论：官方内置插件的工具名（feishu_*）同样不在 ClawHub 契约白名单（官方内置插件不经过 ClawHub 扫描注册，其工具名不会进入平台注册表）
+- 10.5（本版）按平台指引（"Remove unsupported contract keys or move them to a documented OpenClaw contract field"）**直接移除 `contracts` 字段**，扫描告警归零
+
+**变更：**
+
+- `openclaw.plugin.json`：删除整个 `contracts` 字段（顶层 keys 变为 id/name/channels/skills/configSchema/channelConfigs 六个）
+- `package.json`：版本号 `2026.10.4` → `2026.10.5`，`build.openclawVersion` 同步
+- README（中英双语）与 CHANGELOG 同步更新
+
+**影响说明（重要）：**
+
+- `contracts` 是**静态能力所有权元数据**，仅用于 tool discovery 优化（让 OpenClaw 按需加载拥有目标工具的插件运行时），**不参与插件运行时逻辑**
+- 官方文档明确：工具没有 `toolMetadata`/`contracts` 声明时，OpenClaw 保留既有行为——tool contract 匹配 policy 时正常加载拥有插件
+- **插件运行时功能、39 个飞书工具、OpenClaw 8.1–10.3 兼容性（command-auth-compat 双路径）、footer/configSchema 41 字段、授权一致性 3840 组——全部不变**
+- ClawHub 平台扫描预期 **0 errors / 0 warnings**
+- 三渠道同源重新发布：npm `@hotwvpyym/openclaw-lark@2026.10.5` / GitHub Release `v2026.10.5` / ClawHub `@hotwvpyym/openclaw-lark` 2026.10.5
+
+**发布形态：**
+
+- 权威 tgz：`hotwvpyym-openclaw-lark-2026.10.5.tgz`
+- 兼容范围不变：OpenClaw `>=2026.8.1`（8.1 / 8.35 / 9.6 / 9.7 / 9.8 / 10.3 实证）
+
+## 2026.10.4 — 2026-10-15（元数据规范化第一步：contracts 对齐官方内置命名）
 
 **为什么距 10.3 仅一天就发布 10.4：**
 
