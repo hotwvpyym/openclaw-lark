@@ -22,7 +22,7 @@
 | 与新版 OpenClaw 不兼容 | 官方 2026.7.16 版无法安装/正常运行在 OpenClaw **2026.9.x 及以上**（插件 SDK API 已变化）；**2026.10.x 起官方移除了 `openclaw/plugin-sdk/command-auth` 子路径**，官方 7.16 的静态 import 会在插件注册前加载失败 |
 | 官方新线门槛更高 | 官方替代插件 `@openclaw/feishu` 要求 OpenClaw **≥2026.9.8**，无法用于 9.7 及以下版本，且该插件**不提供卡片用量页脚（footer metrics）** |
 
-### 本版本修复的核心问题（OpenClaw 2026.9.7 生产实测验证 + 2026.10.3/10.4 对齐验证）
+### 本版本修复的核心问题（OpenClaw 2026.9.7 生产实测验证 + 2026.10.3 对齐验证）
 
 1. **卡片页脚指标缺失**：官方版升级到 9.7 后，卡片页脚只剩「状态 + 耗时」，`tokens / cache / context / model` 四项全部丢失。
    - 根因：OpenClaw 2026.9.7 起会话存储从 `sessions.json` 改为 **per-agent SQLite**（`<stateDir>/agents/<agentId>/agent/openclaw-agent.sqlite`），footer 渲染时的 agent 归属解析抛出 `AgentSelectionRequiredError`，被外层 `catch` 静默吞掉，导致页脚渲染中止。
@@ -39,7 +39,7 @@
    - **授权一致性回归**：3840 组参数对比 legacy vs ingress，3560 组一致（92.7%），280 组差异全部为官方 10.x 有意收紧（更严格、更安全，无反向风险）；同时修复空 sender + 通配 allowlist 的越权缺口（详见 `reports/auth-consistency/REPORT.md`）。
 5. **manifest configSchema 修复（OpenClaw 10.x 配置校验收严）**：OpenClaw 10.x 起基于插件 manifest 的 `configSchema` **严格校验**渠道配置；旧版 manifest 该字段为空，导致 `channels.feishu.footer`（页脚六项开关）等全部合法配置被拒绝（报 `must not have additional properties`），openclaw 升级后插件配置直接 invalid。
    - 修复：将源码 `FEISHU_CONFIG_JSON_SCHEMA`（zod 自动生成）完整同步进 manifest `configSchema`，共 **41 个字段**（footer 六项 / dmPolicy / replyMode / heartbeat / dedup / accounts 等）；
-   - 效果：`openclaw config validate` 通过，页脚六项等配置正常生效；本地 clawhub validate **0 Breakages / 0 Warnings**（平台提交后扫描的 contracts 告警已在 2026.10.4 规范化消除）。
+   - 效果：`openclaw config validate` 通过，页脚六项等配置正常生效；本地 clawhub validate **0 Breakages / 0 Warnings**（平台提交后扫描的 contracts 告警已在 2026.10.5 规范化消除）。
 
 ### 保留的官方全部功能
 
@@ -65,22 +65,11 @@
 
 ## 二、兼容版本（Compatibility）
 
-**声明：兼容 OpenClaw 2026.8.1 及以上所有版本。**
+兼容 OpenClaw **2026.8.1 及以上所有稳定版**（当前最新验证版本：2026.10.3；仅维护稳定版，beta 不在支持范围）。
 
-以下版本已实测验证（替换 node_modules/openclaw 软链逐一跑 typecheck，全部 0 错误；9.7 为生产环境实测）：
+已实测：`2026.8.1 / 2026.8.35 / 2026.9.6 / 2026.9.7（生产实测）/ 2026.9.8 / 2026.10.3`——typecheck 全 0 错误，9.7 另经生产服务器全功能实测（footer 六项/消息收发/插件加载全过）。
 
-| OpenClaw 版本 | 类型 | 验证结果 |
-|---|---|---|
-| 2026.8.1 | 官方 tarball | typecheck 0 错误 ✅ |
-| 2026.8.35 | 官方 tarball（extended-stable） | typecheck 0 错误 ✅ |
-| 2026.9.6 | 官方 tarball | typecheck 0 错误 ✅ |
-| 2026.9.7 | 官方 tarball + 生产服务器 | typecheck 0 错误 + 生产实测（footer 六项/消息收发/插件加载全过）✅ |
-| 2026.9.8 | 官方 tarball | typecheck 0 错误 ✅ |
-| **2026.10.5** | 官方 npm（latest 稳定版） | 移除 manifest `contracts` 字段（平台契约白名单不含 feishu 工具名，按平台指引删除），ClawHub 平台扫描 warning 归零；运行时与 10.3/10.4 完全一致 ✅ |
-| **2026.10.4** | 官方 npm（latest 稳定版） | 与 10.3 运行时完全一致；manifest `contracts` 对齐平台契约白名单（14 key，官方内置命名），ClawHub 平台扫描 warning 归零 ✅ |
-| 2026.10.3 | 官方 npm（latest 稳定版） | typecheck 0 错误 + lint 0 errors + 445 测试全绿 + clawhub validate **0 Breakages / 0 Warnings** ✅ |
-
-**架构适配说明**：OpenClaw 8.x / 9.6 使用 `sessions.json` 会话存储，9.7+ 使用 per-agent SQLite —— 插件对两种架构均做了兼容（SQLite 直读不可用时自动回退 SDK 读取），因此 2026.8.1 至最新版均可用。
+架构说明：OpenClaw 8.x / 9.6 使用 `sessions.json` 会话存储，9.7+ 使用 per-agent SQLite——插件对两种架构均兼容（SQLite 直读不可用时自动回退 SDK 读取）。
 
 ---
 
@@ -177,17 +166,9 @@ openclaw config set channels.feishu.footer.model true     # 模型
 
 ## 六、版本历史（Changelog）
 
-| 版本 | 内容 |
-|---|---|
-| **2026.10.5**（当前，正式发布版） | **元数据规范化（移除 contracts 字段，ClawHub 扫描归零）**。为什么 10.3→10.4→10.5 间隔这么短：10.3 发布后 ClawHub **提交后安全扫描**检出 `manifest-unknown-contracts`（P1）。10.4 将 `contracts.tools` 的 39 个官方 7.16 遗留 key 对齐为官方内置 @openclaw/feishu 的 14 个能力域级 key，**但平台扫描仍报同一告警**——实证表明官方内置插件的工具名（feishu_*）不在 ClawHub 平台契约白名单（内置插件不经过 ClawHub 扫描注册）。本版按平台指引（"Remove unsupported contract keys or move them to a documented OpenClaw contract field"）**直接移除 `contracts` 字段**。**影响说明**：`contracts` 是静态能力所有权元数据，仅用于 tool discovery 优化；移除后插件运行时功能、39 个飞书工具、OpenClaw 8.1–10.3 兼容性、footer/configSchema/授权一致性**全部不变**（官方文档：无 toolMetadata 时工具按 tool contract 与 policy 正常加载）。三渠道同源重新发布（npm / GitHub Release v2026.10.5 / ClawHub 2026.10.5） |
-| 2026.10.4（正式发布版） | 元数据规范化第一步：`contracts.tools` 39 个官方 7.16 遗留 key → 官方内置 @openclaw/feishu 14 个能力域级 key；发布后平台扫描仍报 `manifest-unknown-contracts`（官方内置 key 不在 ClawHub 白名单），故由 10.5 彻底移除 |
-| 2026.10.3（正式发布版） | 对齐 OpenClaw 2026.10.3 稳定版（npm latest）：新增 `command-auth-compat` 双路径兼容层（9.x legacy / 10.x channel-ingress-runtime），修复官方 10.x 移除 command-auth 子路径后的加载失败；manifest 补 `name` 字段；授权一致性回归 3840 组通过（含空 sender 越权缺口修复）；兼容 OpenClaw ≥2026.8.1 |
-| 2026.9.7 | 发布就绪版本：包名改为 `@hotwvpyym/openclaw-lark`（匹配 ClawHub 发布者 scope），补 `openclaw.build.openclawVersion`/`license` 字段；内容与 9.6.11 一致（日历 page_size 全量修复 + footer 指标 + 性能优化） |
-| 2026.9.6.11 | 日历等 13 文件 20 处 `page_size` 上下限全量补齐（按飞书文档），calendar 系列运行时钳制双保险；修复上一版注入产生的语法问题 |
-| 2026.9.6.10 | AbortController 生命周期管理；`not available` 日志降级 debug |
-| 2026.9.6.9 | 会话快照探测削峰（720→≤60 次/轮）；4 处高频日志降噪 |
-| 2026.9.6.8 | **核心修复**：卡片页脚 tokens/cache/context/model 恢复（agent 归属解析兜底） |
-| 2026.9.6.x 前序 | 加载/收发/流式适配（对齐官方 9.6 基线） |
+每个版本的详细更新说明（修复内容、发布原因、权威包 sha256）请查看 [GitHub Releases](https://github.com/hotwvpyym/openclaw-lark-compat/releases)。
+
+当前版本：**2026.10.5**（兼容 OpenClaw 2026.8.1 – 10.3 stable；三渠道同源发布：npm / GitHub Release / ClawHub，包内容逐字节一致）。
 
 ---
 
