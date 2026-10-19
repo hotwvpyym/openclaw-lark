@@ -67,11 +67,11 @@
 
 ## 二、兼容版本（Compatibility）
 
-兼容 OpenClaw **2026.8.1 及以上所有稳定版**（当前最新验证版本：2026.10.3；仅维护稳定版，beta 不在支持范围）。
+兼容 OpenClaw **2026.8.1 及以上所有稳定版**（当前最新验证版本：2026.10.5；仅维护稳定版，beta 不在支持范围）。
 
-已实测：`2026.8.1 / 2026.8.35 / 2026.9.6 / 2026.9.7（生产实测）/ 2026.9.8 / 2026.10.3`——typecheck 全 0 错误，9.7 另经生产服务器全功能实测（footer 六项/消息收发/插件加载全过）。
+已实测：`2026.8.1 / 2026.8.35 / 2026.9.6 / 2026.9.7（生产实测）/ 2026.9.8 / 2026.10.3 / 2026.10.5`——typecheck 全 0 错误，9.7 另经生产服务器全功能实测（footer 六项/消息收发/插件加载全过）。
 
-架构说明：OpenClaw 8.x / 9.6 使用 `sessions.json` 会话存储，9.7+ 使用 per-agent SQLite——插件对两种架构均兼容（SQLite 直读不可用时自动回退 SDK 读取）。
+架构说明：OpenClaw 8.x / 9.6 使用 `sessions.json` 会话存储，9.7+ 使用 per-agent SQLite（主表 `session_entries`）；OpenClaw 10.4+ 将会话主表迁移为 `session_nodes`（entry_json 列结构不变）——插件对两种 schema 均兼容（直读 SQL 双路径探测表名，不可用时自动回退 SDK 读取）。
 
 ---
 
@@ -87,12 +87,12 @@
 **方式 A：本地 tgz 安装（推荐，最可控）**
 
 ```bash
-openclaw plugins install npm-pack:/path/to/hotwvpyym-openclaw-lark-2026.10.6.tgz --force --accept-capabilities
+openclaw plugins install npm-pack:/path/to/hotwvpyym-openclaw-lark-2026.10.7.tgz --force --accept-capabilities
 ```
 
 **方式 B：从 GitHub Release 下载**
 
-在 [Releases](../../releases) 页面下载 `hotwvpyym-openclaw-lark-2026.10.6.tgz`，然后按方式 A 安装。
+在 [Releases](../../releases) 页面下载 `hotwvpyym-openclaw-lark-2026.10.7.tgz`，然后按方式 A 安装。
 
 **方式 C：ClawHub（发布后可用）**
 
@@ -103,7 +103,7 @@ openclaw plugins install @hotwvpyym/openclaw-lark
 安装完成后确认：
 
 ```bash
-openclaw plugins list        # 应看到 openclaw-lark，版本 2026.10.6
+openclaw plugins list        # 应看到 openclaw-lark，版本 2026.10.7
 openclaw gateway restart     # 若安装过程提示 drain 超时，用此命令兜底
 ```
 
@@ -170,7 +170,7 @@ openclaw config set channels.feishu.footer.model true     # 模型
 
 每个版本的详细更新说明（修复内容、发布原因、权威包 sha256）请查看 [GitHub Releases](https://github.com/hotwvpyym/openclaw-lark-compat/releases)。
 
-当前版本：**2026.10.6**（兼容 OpenClaw 2026.8.1 – 10.3 stable；三渠道同源发布：npm / GitHub Release / ClawHub，包内容逐字节一致）。
+当前版本：**2026.10.7**（兼容 OpenClaw 2026.8.1 – 10.5 stable；三渠道同源发布：npm / GitHub Release / ClawHub，包内容逐字节一致）。
 
 ---
 

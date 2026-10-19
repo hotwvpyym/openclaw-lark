@@ -11,18 +11,19 @@
  * detection to UnavailableGuard.
  */
 
-import { existsSync } from 'node:fs';
-import { basename, dirname, join, resolve } from 'node:path';
-// eslint-disable-next-line n/no-unsupported-features/node-builtins
-import { DatabaseSync } from 'node:sqlite';
 import { resolveDefaultAgentId } from 'openclaw/plugin-sdk/agent-runtime';
-import { getSessionEntry, resolveStorePath } from 'openclaw/plugin-sdk/session-store-runtime';
+import { resolveStorePath } from 'openclaw/plugin-sdk/session-store-runtime';
 import type { ReplyPayload } from 'openclaw/plugin-sdk/core';
 import { SILENT_REPLY_TOKEN } from 'openclaw/plugin-sdk/reply-runtime';
 import { extractLarkApiCode } from '../core/api-error';
 import { larkLogger } from '../core/lark-logger';
 import { registerShutdownHook } from '../core/shutdown-hooks';
 import { sendCardFeishu, updateCardFeishu } from '../messaging/outbound/send';
+import {
+  directReadSessionEntryViaSqlite,
+  getSessionEntryCompat,
+  resolveSqlitePathFromStorePath,
+} from './session-store-compat';
 import {
   STREAMING_ELEMENT_ID,
   buildCardContent,
@@ -100,52 +101,11 @@ function extractFooterSessionMetrics(entry: Record<string, unknown>): FooterSess
 }
 
 /**
- * 从 sessions.json store 路径推导 per-agent SQLite 库路径。
- * 与 openclaw 9.7 内部 resolveUnsuffixedSqliteTargetFromSessionStorePath 逻辑一致：
- * <stateDir>/agents/<agentId>/sessions/sessions.json → <stateDir>/agents/<agentId>/agent/openclaw-agent.sqlite
+ * v6+：直读会话库（绕开 9.7 SDK 的复制快照机制）与 SDK 兜底统一收敛到
+ * `session-store-compat.ts` 兼容层：直读双路径探测表名（10.4+ `session_nodes` /
+ * 9.x~10.3 `session_entries`），SDK 读取探测异步 API（10.4+ `getSessionEntryAsync` /
+ * ≤10.3 同步 `getSessionEntry`）。
  */
-function resolveSqlitePathFromStorePath(storePath: string): string {
-  const resolvedPath = resolve(storePath);
-  if (resolvedPath.endsWith('.sqlite')) return resolvedPath;
-  const sessionsDir = dirname(resolvedPath);
-  if (basename(resolvedPath) !== 'sessions.json') return join(sessionsDir, 'openclaw-agent.sqlite');
-  if (basename(sessionsDir) !== 'sessions') return join(sessionsDir, 'openclaw-agent.sqlite');
-  const agentDir = dirname(sessionsDir);
-  if (basename(dirname(agentDir)) !== 'agents') return join(sessionsDir, 'openclaw-agent.sqlite');
-  return join(agentDir, 'agent', 'openclaw-agent.sqlite');
-}
-
-/**
- * v6：直读会话库（绕开 9.7 SDK 的复制快照机制）。
- * 9.7 的 getSessionEntry 内部把源库复制到临时目录做只读快照（createStableReadOnlyCopyInTempDirectory），
- * 宿主高频写活库时快照反复失败（SqliteSourceChangedError → "did not stabilize after 10 read-only
- * inspection attempts"）→ 永远读不到。这里用 node:sqlite 直接以只读方式打开主库查询——
- * SQLite 本身支持并发读（WAL 模式），读操作不会与宿主写操作互斥，稳定可靠。
- */
-function directReadSessionEntryViaSqlite(storePath: string, sessionKey: string): Record<string, unknown> | undefined {
-  try {
-    const sqlitePath = resolveSqlitePathFromStorePath(storePath);
-    if (!existsSync(sqlitePath)) return undefined;
-    const db = new DatabaseSync(sqlitePath, { readOnly: true });
-    try {
-      const row = db
-        .prepare('SELECT entry_json FROM session_entries WHERE session_key = ?')
-        .get(sessionKey) as { entry_json?: unknown } | undefined;
-      if (!row || typeof row.entry_json !== 'string' || !row.entry_json) return undefined;
-      const parsed: unknown = JSON.parse(row.entry_json);
-      return typeof parsed === 'object' && parsed !== null ? (parsed as Record<string, unknown>) : undefined;
-    } finally {
-      try {
-        db.close();
-      } catch {
-        // 忽略关闭异常
-      }
-    }
-  } catch (err) {
-    log.debug('footer metrics direct sqlite read failed', { storePath, sessionKey, error: String(err) });
-    return undefined;
-  }
-}
 
 export class StreamingCardController {
   // ---- Explicit state machine ----
@@ -319,11 +279,11 @@ export class StreamingCardController {
                 sdkProbeDone = true;
                 let entry: Record<string, unknown> | undefined;
                 try {
-                  entry = getSessionEntry(
+                  entry = await getSessionEntryCompat(
                     agentId === undefined
                       ? { storePath, sessionKey: candidate }
                       : { agentId, storePath, sessionKey: candidate },
-                  ) as Record<string, unknown> | undefined;
+                  );
                 } catch {
                   continue; // 该作用域不可读，跳过
                 }

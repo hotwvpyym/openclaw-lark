@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026.10.7 — 2026-10-19（OpenClaw 2026.10.5 兼容 + footer 读库双路径修复）
+
+**变更：**
+
+- **OpenClaw 2026.10.5 兼容**：SDK devDependency `2026.10.3 → 2026.10.5`，typecheck / lint / 445 tests 全绿
+- **footer 指标读库修复（核心）**：OpenClaw 10.4+ 将会话主表从 `session_entries` 迁移为 `session_nodes`（entry_json 列结构不变），旧直读 SQL 在 10.4+ 上恒空，导致消息卡片 footer 的「上下文 / 缓存 / 输入输出 token」三项不显示。修复：新增 `src/card/session-store-compat.ts` 兼容层，直读 SQL **双路径探测表名**（`session_nodes` 优先、`session_entries` 回退），8.1 ~ 10.5 全线可用
+- **getSessionEntry 退役迁移**：plugin-sdk 同步 `getSessionEntry` 将于 2026-12-31 退役，10.4+ 提供异步 `getSessionEntryAsync`。兼容层运行时探测异步 API（存在走异步，≤10.3 回退同步）；`streaming-card-controller` 的 SDK 兜底与 `tool-use-config` 的 verbose 读取均改走兼容层/直读双路径
+- **ClawHub P6 措辞修复**：`skills/feishu-channel-rules/SKILL.md` 移除 `alwaysActive: true` 与「Always active in Lark conversations」等措辞（此前 skillSpector 审计 2×HIGH System Prompt Leakage）
+- **实验三项不进标品**：footer 实验（工具统计 / 会话短标识 / 首 token 延迟）保持在实验分支自用验证，本标品版本不含这三项
+- `package.json`：版本号 `2026.10.6 → 2026.10.7`
+- README（中英双语）：兼容版本最新验证 `2026.10.3 → 2026.10.5`，架构说明补 10.4+ `session_nodes` 迁移说明
+
+**发布形态：**
+
+- 权威 tgz：`hotwvpyym-openclaw-lark-2026.10.7.tgz`
+- 三渠道同源发布：npm `@hotwvpyym/openclaw-lark@2026.10.7`（latest）/ GitHub Release `v2026.10.7` / ClawHub 2026.10.7
+- 兼容范围不变：OpenClaw `>=2026.8.1`
+
 ## 2026.10.6 — 2026-10-15（README 精简 + 版本表述修正）
 
 **变更：**

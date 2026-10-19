@@ -14,6 +14,7 @@ import { resolveDefaultAgentId } from 'openclaw/plugin-sdk/agent-runtime';
 import { getSessionEntry, resolveStorePath } from 'openclaw/plugin-sdk/session-store-runtime';
 import type { FeishuConfig } from '../core/types';
 import { larkLogger } from '../core/lark-logger';
+import { directReadSessionEntryViaSqlite } from './session-store-compat';
 
 const log = larkLogger('card/tool-use-config');
 
@@ -64,6 +65,14 @@ function resolveSessionVerboseMode(cfg: OpenClawConfig, sessionKey: string, agen
     const candidateKeys = resolveCandidateSessionKeys(cfg, sessionKey);
 
     for (const candidateKey of candidateKeys) {
+      // v7：直读优先（双路径表名探测，10.4+ session_nodes / ≤10.3 session_entries）。
+      // verboseLevel 落在 entry_json 内，直读稳定；SDK 同步读取兜底（退役前可用）。
+      const directEntry = directReadSessionEntryViaSqlite(storePath, candidateKey);
+      if (directEntry) {
+        const mode = normalizeToolUseMode(directEntry.verboseLevel);
+        if (mode) return mode;
+        return undefined;
+      }
       const existing = getSessionEntry({ agentId, storePath, sessionKey: candidateKey });
       const mode = normalizeToolUseMode(existing?.verboseLevel);
       if (mode) return mode;
