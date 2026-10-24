@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026.10.9 — 2026-10-25（contracts.tools 声明 + 命令 owner 授权修复）
+
+**变更：**
+
+- **manifest 声明 contracts.tools（Issue #2）**：`openclaw.plugin.json` 顶层新增 `contracts.tools`（39 个 `feishu_*` 工具，与代码 `registerTool` 逐一对应，含 doc 系列 `fetch/create/update` 与 `ask_user_question`）。OpenClaw 10.x 主机要求插件在注册 agent 工具前声明 `contracts.tools`，此前缺失导致 10.x 主机拒绝工具注册；本版本补齐后，已真机验证重启 0 条注册拒绝警告。
+- **命令 owner 授权修复（Issue #1）**：`src/messaging/inbound/command-auth-compat.ts` 的 10.x ingress 路径原将 `commandOwnerAllowFrom` 仅设为账号级 `allowFrom`；当账号未显式配置 `allowFrom`（`dmPolicy=pairing`）而发送者已列入全局 `commands.ownerAllowFrom` 时，主人系统命令被静默拒绝（`delivered=false`）。修复：命令 owner 白名单改为「账号级 allowFrom ∪ 全局 `commands.ownerAllowFrom`（按 `feishu:` 前缀归一化为纯 senderId）」，paired owner 未配 allowFrom 时命令可正常授权。
+- `package.json`：版本号 `2026.10.8 → 2026.10.9`。
+
+## 2026.10.8 — 2026-10-19（npm 10.7 渠道修复重发 · 三渠道统一）
+
+**背景与变更：**
+
+- **修复 npm 10.7 渠道打包事故**：2026.10.7 发布时 npm 渠道包遗漏 `dist/` 构建产物（git 仓库不跟踪 dist，发布流程从 clone 源码打包所致），该渠道包不完整、无法运行。
+- **升版重发**：npm 撤回受账号 2FA 策略限制（unpublish 需 2FA 验证），坏版本无法删除，故升版发布 **2026.10.8**（内容与 2026.10.7 同源、构建产物完整），三渠道（npm / GitHub Release / ClawHub）统一为 2026.10.8。
+- 功能变更与 2026.10.7 完全一致：OpenClaw 2026.10.5 兼容、footer 读库双路径修复（session_nodes / session_entries）、getSessionEntry 迁移、P6 措辞修复、实验三项不进标品。
+- `package.json`：版本号 `2026.10.7 → 2026.10.8`。
+- README（中英双语）：当前版本与安装示例同步 2026.10.8，补充 10.7 npm 事故说明。
+
+**发布形态：**
+
+- 权威 tgz：`hotwvpyym-openclaw-lark-2026.10.8.tgz`
+- 三渠道同源发布：npm `@hotwvpyym/openclaw-lark@2026.10.8`（latest）/ GitHub Release `v2026.10.8` / ClawHub 2026.10.8
+- 兼容范围不变：OpenClaw `>=2026.8.1`
+
 All notable changes to this project are documented in this file.
 
 ## 2026.10.7 — 2026-10-19（OpenClaw 2026.10.5 兼容 + footer 读库双路径修复）
